@@ -2,7 +2,7 @@
 -- Title      : pbi wrapper target
 -- Project    : pbi (Pico Bus)
 -------------------------------------------------------------------------------
--- File       : pbi_wrapper_target.vhd
+-- File       : pbi_wrapper_target_v1.vhd
 -- Author     : Mathieu Rosière
 -- Company    : 
 -- Created    : 2014-06-03
@@ -15,7 +15,7 @@
 -- Copyright (c) 2014 
 -------------------------------------------------------------------------------
 -- Revisions  :
--- Date        Version  Author   Description
+-- Date        Version  Author  Description
 -- 2014-06-03  1.0      mrosiere Created
 -- 2025-08_03  1.1      mrosiere Use unconstrainted pbi
 -------------------------------------------------------------------------------
@@ -26,7 +26,7 @@ use     ieee.numeric_std.all;
 library work;
 use     work.pbi_pkg.all;
 
-entity pbi_wrapper_target is
+entity pbi_wrapper_target_v1 is
   -- =====[ Parameters ]==========================
   generic (
     SIZE_DATA      : natural := 8;
@@ -40,19 +40,23 @@ entity pbi_wrapper_target is
     arstn_i             : in    std_logic; -- asynchronous reset
 
     -- To IP
-    pbi_ini_o           : out   pbi_ini_t;
-    pbi_tgt_i           : in    pbi_tgt_t;
+    ip_cs_o             : out   std_logic;
+    ip_re_o             : out   std_logic;
+    ip_we_o             : out   std_logic;
+    ip_addr_o           : out   std_logic_vector (SIZE_ADDR_IP-1 downto 0);
+    ip_wdata_o          : out   std_logic_vector (SIZE_DATA-1    downto 0);
+    ip_rdata_i          : in    std_logic_vector (SIZE_DATA-1    downto 0);
+    ip_busy_i           : in    std_logic;
     
     -- From Bus
     pbi_ini_i           : in    pbi_ini_t;
     pbi_tgt_o           : out   pbi_tgt_t
     );
-end pbi_wrapper_target;
+end pbi_wrapper_target_v1;
 
-architecture rtl of pbi_wrapper_target is
+architecture rtl of pbi_wrapper_target_v1 is
   constant SIZE_ADDR_ID : natural := PBI_ADDR_WIDTH-SIZE_ADDR_IP;
   constant CST0         : std_logic_vector(pbi_tgt_o.rdata'range) := (others => '0');
-                        
   alias pbi_id          : std_logic_vector(SIZE_ADDR_ID-1 downto 0) is pbi_ini_i.addr(PBI_ADDR_WIDTH-1 downto SIZE_ADDR_IP);
   alias tgt_id          : std_logic_vector(SIZE_ADDR_ID-1 downto 0) is ID            (PBI_ADDR_WIDTH-1 downto SIZE_ADDR_IP);
 
@@ -68,37 +72,24 @@ begin  -- rtl
   -----------------------------------------------------------------------------
   -- Chip Select
   -----------------------------------------------------------------------------
-  cs             <= pbi_ini_i.cs when (pbi_id = tgt_id) else
+  cs             <= '1' when (pbi_id = tgt_id) else
                     '0';
 
   -----------------------------------------------------------------------------
   -- To Bus
   -----------------------------------------------------------------------------
-  pbi_tgt_o.rdata<= pbi_tgt_i.rdata when cs='1' else
+  pbi_tgt_o.rdata<= ip_rdata_i when cs='1' else
                     CST0;
-  pbi_tgt_o.busy <= pbi_tgt_i.busy  when cs='1' else
+  pbi_tgt_o.busy <= ip_busy_i  when cs='1' else
                     '0';
   
   -----------------------------------------------------------------------------
   -- To IP
   -----------------------------------------------------------------------------
-  pbi_ini_o.cs        <= cs;
-  pbi_ini_o.re        <= pbi_ini_i.re;
-  pbi_ini_o.we        <= pbi_ini_i.we;
-  pbi_ini_o.addr      <= pbi_ini_i.addr (pbi_ini_o.addr'range);
-  pbi_ini_o.wdata     <= pbi_ini_i.wdata;
+  ip_cs_o        <= cs;
+  ip_re_o        <= pbi_ini_i.re;
+  ip_we_o        <= pbi_ini_i.we;
+  ip_addr_o      <= pbi_ini_i.addr (ip_addr_o 'range);
+  ip_wdata_o     <= pbi_ini_i.wdata(ip_wdata_o'range);
 
--- pragma translate_off
-
---process is
---begin  -- process
---
---  report "Address : "&integer'image(pbi_ini_o.addr'length) severity note;  
---
---  wait;
---end process;
-
--- pragma translate_on  
-  
-  
 end rtl;

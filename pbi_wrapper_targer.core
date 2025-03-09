@@ -14,9 +14,10 @@ CAPI=2:
 # Revisions  :
 # Date        Version  Author   Description
 # 2021-10-26  1.0.0    mrosiere Created
+# 2025-03-08  1.1.0    mrosiere Use unconstraint pbi
 #-----------------------------------------------------------------------------
 
-name : asylum:component:pbi_wrapper_target:1.0.0
+name        : asylum:component:pbi_wrapper_target:1.1.0
 description : PBI Generic wrapper for target IP
 
 filesets:
@@ -27,8 +28,10 @@ filesets:
   files_hdl:
     files:
       - src/pbi_wrapper_target.vhd
-    file_type : vhdlSource
-    depend :
+      - src/pbi_wrapper_target_v1.vhd
+    file_type    : vhdlSource-2008
+    #logical_name : asylum
+    depend       :
       - ">=asylum:package:pbi_pkg:1.0.0"
 
 targets:
