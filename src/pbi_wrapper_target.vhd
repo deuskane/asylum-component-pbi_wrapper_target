@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosière
 -- Company    : 
 -- Created    : 2014-06-03
--- Last update: 2025-03-09
+-- Last update: 2025-03-15
 -- Platform   : 
 -- Standard   : VHDL'87
 -------------------------------------------------------------------------------
@@ -50,13 +50,14 @@ entity pbi_wrapper_target is
 end pbi_wrapper_target;
 
 architecture rtl of pbi_wrapper_target is
-  constant SIZE_ADDR_ID : natural := PBI_ADDR_WIDTH-SIZE_ADDR_IP;
-  constant CST0         : std_logic_vector(pbi_tgt_o.rdata'range) := (others => '0');
+  constant SIZE_ADDR       : natural := pbi_ini_i.addr'length;
+  constant SIZE_ADDR_ID    : natural := SIZE_ADDR-SIZE_ADDR_IP;
+  constant CST0            : std_logic_vector(pbi_tgt_o.rdata'range) := (others => '0');
                         
-  alias pbi_id          : std_logic_vector(SIZE_ADDR_ID-1 downto 0) is pbi_ini_i.addr(PBI_ADDR_WIDTH-1 downto SIZE_ADDR_IP);
-  alias tgt_id          : std_logic_vector(SIZE_ADDR_ID-1 downto 0) is ID            (PBI_ADDR_WIDTH-1 downto SIZE_ADDR_IP);
-
-  signal cs             : std_logic;
+  alias    pbi_id          : std_logic_vector(SIZE_ADDR_ID-1 downto 0) is pbi_ini_i.addr(SIZE_ADDR-1 downto SIZE_ADDR_IP);
+  alias    tgt_id          : std_logic_vector(SIZE_ADDR_ID-1 downto 0) is ID            (SIZE_ADDR-1 downto SIZE_ADDR_IP);
+           
+  signal    cs             : std_logic;
   
 begin  -- rtl
 
