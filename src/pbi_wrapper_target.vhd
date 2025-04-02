@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosière
 -- Company    : 
 -- Created    : 2014-06-03
--- Last update: 2025-03-15
+-- Last update: 2025-03-31
 -- Platform   : 
 -- Standard   : VHDL'87
 -------------------------------------------------------------------------------
@@ -25,6 +25,7 @@ use     ieee.std_logic_1164.all;
 use     ieee.numeric_std.all;
 library work;
 use     work.pbi_pkg.all;
+use     work.string_pkg.all;
 
 entity pbi_wrapper_target is
   -- =====[ Parameters ]==========================
@@ -54,11 +55,21 @@ architecture rtl of pbi_wrapper_target is
   constant SIZE_ADDR_ID    : natural := SIZE_ADDR-SIZE_ADDR_IP;
   constant CST0            : std_logic_vector(pbi_tgt_o.rdata'range) := (others => '0');
                         
-  alias    pbi_id          : std_logic_vector(SIZE_ADDR_ID-1 downto 0) is pbi_ini_i.addr(SIZE_ADDR-1 downto SIZE_ADDR_IP);
-  alias    tgt_id          : std_logic_vector(SIZE_ADDR_ID-1 downto 0) is ID            (SIZE_ADDR-1 downto SIZE_ADDR_IP);
+  signal   pbi_id          : std_logic_vector(SIZE_ADDR_ID-1 downto 0);
+  signal   tgt_id          : std_logic_vector(SIZE_ADDR_ID-1 downto 0);
            
-  signal    cs             : std_logic;
-  
+  signal   cs              : std_logic;
+  signal   tgt_addr        : std_logic_vector(SIZE_ADDR_IP-1 downto 0);
+  signal   tgt_rdata       : std_logic_vector(pbi_tgt_o.rdata'range);
+  signal   tgt_busy        : std_logic;
+
+  signal   ini_cs          : std_logic;
+  signal   ini_re          : std_logic;
+  signal   ini_we          : std_logic;
+  signal   ini_addr        : std_logic_vector(pbi_ini_i.addr'range);
+  signal   ini_wdata       : std_logic_vector(pbi_ini_i.wdata'range);
+
+    
 begin  -- rtl
 
   -----------------------------------------------------------------------------
@@ -69,35 +80,54 @@ begin  -- rtl
   -----------------------------------------------------------------------------
   -- Chip Select
   -----------------------------------------------------------------------------
-  cs             <= pbi_ini_i.cs when (pbi_id = tgt_id) else
-                    '0';
+  -- Don't use Alias to see this signal in gtkwave
+  pbi_id             <= ini_addr(SIZE_ADDR   -1 downto SIZE_ADDR_IP);
+  tgt_id             <= ID      (SIZE_ADDR   -1 downto SIZE_ADDR_IP);
+  tgt_addr           <= ini_addr(SIZE_ADDR_IP-1 downto 0);
+  
+  cs                 <= ini_cs when (pbi_id = tgt_id) else
+                        '0';
 
+  
+  -----------------------------------------------------------------------------
+  -- From Bus
+  -----------------------------------------------------------------------------
+  -- USe tmp signal to see this signal in gtkwave
+  ini_cs             <= pbi_ini_i.cs   ;
+  ini_re             <= pbi_ini_i.re   ;
+  ini_we             <= pbi_ini_i.we   ;
+  ini_addr           <= pbi_ini_i.addr ;
+  ini_wdata          <= pbi_ini_i.wdata;
+  
   -----------------------------------------------------------------------------
   -- To Bus
   -----------------------------------------------------------------------------
-  pbi_tgt_o.rdata<= pbi_tgt_i.rdata when cs='1' else
-                    CST0;
-  pbi_tgt_o.busy <= pbi_tgt_i.busy  when cs='1' else
-                    '0';
+  tgt_rdata          <= pbi_tgt_i.rdata when cs='1' else
+                        CST0(tgt_rdata'range);
+  tgt_busy           <= pbi_tgt_i.busy  when cs='1' else
+                        '0';
+
+  pbi_tgt_o.rdata    <= tgt_rdata;
+  pbi_tgt_o.busy     <= tgt_busy ;
   
   -----------------------------------------------------------------------------
   -- To IP
   -----------------------------------------------------------------------------
   pbi_ini_o.cs        <= cs;
-  pbi_ini_o.re        <= pbi_ini_i.re;
-  pbi_ini_o.we        <= pbi_ini_i.we;
-  pbi_ini_o.addr      <= pbi_ini_i.addr (pbi_ini_o.addr'range);
-  pbi_ini_o.wdata     <= pbi_ini_i.wdata;
+  pbi_ini_o.re        <= ini_re;
+  pbi_ini_o.we        <= ini_we;
+  pbi_ini_o.addr      <= std_logic_vector(resize(unsigned(tgt_addr),pbi_ini_o.addr'length));
+  pbi_ini_o.wdata     <= ini_wdata;
 
 -- pragma translate_off
 
---process is
---begin  -- process
---
---  report "Address : "&integer'image(pbi_ini_o.addr'length) severity note;  
---
---  wait;
---end process;
+  process is
+  begin  -- process
+
+    report "Target["&to_hstring(ID)&"] Address : "&integer'image(SIZE_ADDR_IP) severity note;  
+
+    wait;
+  end process;
 
 -- pragma translate_on  
   

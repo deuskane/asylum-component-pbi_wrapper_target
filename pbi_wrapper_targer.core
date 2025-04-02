@@ -15,9 +15,10 @@ CAPI=2:
 # Date        Version  Author   Description
 # 2021-10-26  1.0.0    mrosiere Created
 # 2025-03-08  1.1.0    mrosiere Use unconstraint pbi
+# 2025-04-02  1.1.1    mrosiere Add variable for gtkwave
 #-----------------------------------------------------------------------------
 
-name        : asylum:component:pbi_wrapper_target:1.1.0
+name        : asylum:component:pbi_wrapper_target:1.1.1
 description : PBI Generic wrapper for target IP
 
 filesets:
