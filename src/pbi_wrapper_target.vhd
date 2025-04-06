@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosière
 -- Company    : 
 -- Created    : 2014-06-03
--- Last update: 2025-04-05
+-- Last update: 2025-04-06
 -- Platform   : 
 -- Standard   : VHDL'87
 -------------------------------------------------------------------------------
@@ -35,13 +35,17 @@ entity pbi_wrapper_target is
     SIZE_DATA      : natural := 8;
     SIZE_ADDR_IP   : natural := 0;
     ID             : std_logic_vector (PBI_ADDR_WIDTH-1 downto 0) := (others => '0');
-    ALGO           : string  := "binary" -- "binary" / "one_hot"
+    ADDR_ENCODING  : string  := "binary"; -- "binary" / "one_hot"
+    TGT_ZEROING    : boolean := false
+    
      );
   -- =====[ Interfaces ]==========================
   port (
     clk_i               : in    std_logic;
     cke_i               : in    std_logic;
     arstn_i             : in    std_logic; -- asynchronous reset
+
+    cs_o                : out   std_logic;
 
     -- To IP
     pbi_ini_o           : out   pbi_ini_t;
@@ -86,20 +90,19 @@ begin  -- rtl
   -----------------------------------------------------------------------------
   -- Don't use Alias to see this signal in gtkwave
   
-  gen_binary: if ALGO="binary"
+  gen_addr_encoding_binary: if ADDR_ENCODING="binary"
   generate
     pbi_id             <= ini_addr(SIZE_ADDR   -1 downto SIZE_ADDR_IP);
     tgt_id             <= ID      (SIZE_ADDR   -1 downto SIZE_ADDR_IP);
     
-    cs                 <= ini_cs when (pbi_id = tgt_id) else
+    cs                 <= '1' when (pbi_id = tgt_id) else
                           '0';
-  end generate gen_binary;
+  end generate gen_addr_encoding_binary;
     
-  gen_one_hot: if ALGO="one_hot"
+  gen_addr_encoding_one_hot: if ADDR_ENCODING="one_hot"
   generate
-    cs                 <= ini_cs and ini_addr(IDX);
-  end generate gen_one_hot;
-
+    cs                 <= ini_addr(IDX);
+  end generate gen_addr_encoding_one_hot;
   
   -----------------------------------------------------------------------------
   -- From Bus
@@ -116,23 +119,34 @@ begin  -- rtl
   -----------------------------------------------------------------------------
   -- To Bus
   -----------------------------------------------------------------------------
-  tgt_rdata          <= pbi_tgt_i.rdata when cs='1' else
-                        CST0(tgt_rdata'range);
-  tgt_busy           <= pbi_tgt_i.busy  when cs='1' else
-                        '0';
+  gen_tgt_zeroing: if TGT_ZEROING = true
+  generate
+    tgt_rdata          <= pbi_tgt_i.rdata when cs='1' else
+                          CST0(tgt_rdata'range);
+    tgt_busy           <= pbi_tgt_i.busy  when cs='1' else
+                          '0';
+  end generate gen_tgt_zeroing;
 
+  gen_tgt_zeroing_b: if TGT_ZEROING = false
+  generate
+    tgt_rdata          <= pbi_tgt_i.rdata;
+    tgt_busy           <= pbi_tgt_i.busy ;
+  end generate gen_tgt_zeroing_b;
+  
   pbi_tgt_o.rdata    <= tgt_rdata;
   pbi_tgt_o.busy     <= tgt_busy ;
   
   -----------------------------------------------------------------------------
   -- To IP
   -----------------------------------------------------------------------------
-  pbi_ini_o.cs        <= cs;
+  pbi_ini_o.cs        <= ini_cs and cs;
   pbi_ini_o.re        <= ini_re;
   pbi_ini_o.we        <= ini_we;
   pbi_ini_o.addr      <= std_logic_vector(resize(unsigned(tgt_addr),pbi_ini_o.addr'length));
   pbi_ini_o.wdata     <= ini_wdata;
 
+  cs_o                <= cs;
+  
 -- pragma translate_off
 
   process is
@@ -140,7 +154,7 @@ begin  -- rtl
 
     report "Target["&to_hstring(ID)&"] Address : "&integer'image(SIZE_ADDR_IP) severity note;
 
-    if (ALGO = "one_hot")
+    if (ADDR_ENCODING = "one_hot")
     then
       report "  * Index : " &integer'image(IDX) severity note;
       
