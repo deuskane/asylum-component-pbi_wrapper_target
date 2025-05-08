@@ -6,7 +6,7 @@
 -- Author     : Mathieu Rosière
 -- Company    : 
 -- Created    : 2014-06-03
--- Last update: 2025-04-06
+-- Last update: 2025-05-08
 -- Platform   : 
 -- Standard   : VHDL'87
 -------------------------------------------------------------------------------
@@ -19,6 +19,7 @@
 -- 2014-06-03  1.0      mrosiere Created
 -- 2025-08-03  1.1      mrosiere Use unconstrainted pbi
 -- 2025-04-05  1.2      mrosiere Add Algo (binary/one-hot)
+-- 2025-05-08  1.3      mrosiere CS depends of input cs Delete clock/reset port
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -41,10 +42,6 @@ entity pbi_wrapper_target is
      );
   -- =====[ Interfaces ]==========================
   port (
-    clk_i               : in    std_logic;
-    cke_i               : in    std_logic;
-    arstn_i             : in    std_logic; -- asynchronous reset
-
     cs_o                : out   std_logic;
 
     -- To IP
@@ -95,13 +92,13 @@ begin  -- rtl
     pbi_id             <= ini_addr(SIZE_ADDR   -1 downto SIZE_ADDR_IP);
     tgt_id             <= ID      (SIZE_ADDR   -1 downto SIZE_ADDR_IP);
     
-    cs                 <= '1' when (pbi_id = tgt_id) else
+    cs                 <= ini_cs when (pbi_id = tgt_id) else
                           '0';
   end generate gen_addr_encoding_binary;
     
   gen_addr_encoding_one_hot: if ADDR_ENCODING="one_hot"
   generate
-    cs                 <= ini_addr(IDX);
+    cs                 <= ini_cs and ini_addr(IDX);
   end generate gen_addr_encoding_one_hot;
   
   -----------------------------------------------------------------------------
@@ -139,7 +136,7 @@ begin  -- rtl
   -----------------------------------------------------------------------------
   -- To IP
   -----------------------------------------------------------------------------
-  pbi_ini_o.cs        <= ini_cs and cs;
+  pbi_ini_o.cs        <= cs;
   pbi_ini_o.re        <= ini_re;
   pbi_ini_o.we        <= ini_we;
   pbi_ini_o.addr      <= std_logic_vector(resize(unsigned(tgt_addr),pbi_ini_o.addr'length));
