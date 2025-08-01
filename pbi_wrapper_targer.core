@@ -30,8 +30,8 @@ filesets:
   #---------------------------------------
   files_hdl:
     files:
-      - src/pbi_wrapper_target.vhd
-      - src/pbi_wrapper_target_v1.vhd
+      - hdl/pbi_wrapper_target.vhd
+      - hdl/pbi_wrapper_target_v1.vhd
     file_type    : vhdlSource-2008
     #logical_name : asylum
     depend       :
