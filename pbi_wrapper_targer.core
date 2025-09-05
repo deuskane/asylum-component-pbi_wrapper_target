@@ -18,9 +18,10 @@ CAPI=2:
 # 2025-04-02  1.1.1    mrosiere Add variable for gtkwave
 # 2025-04-05  1.2.0    mrosiere Add Algo (binary/OneHot)
 # 2025-05-08  1.3.0    mrosiere CS depends of input cs Delete clock/reset port
+# 2025-09-05  1.3.1    mrosiere Add Package
 #-----------------------------------------------------------------------------
 
-name        : asylum:component:pbi_wrapper_target:1.3.0
+name        : asylum:component:pbi_wrapper_target:1.3.1
 description : PBI Generic wrapper for target IP
 
 filesets:
@@ -30,6 +31,7 @@ filesets:
   #---------------------------------------
   files_hdl:
     files:
+      - hdl/pbi_wrapper_target_pkg.vhd
       - hdl/pbi_wrapper_target.vhd
       - hdl/pbi_wrapper_target_v1.vhd
     file_type    : vhdlSource-2008
