@@ -25,10 +25,10 @@
 library ieee;
 use     ieee.std_logic_1164.all;
 use     ieee.numeric_std.all;
-library work;
-use     work.pbi_pkg.all;
-use     work.logic_pkg.all;
-use     work.convert_pkg.all;
+library asylum;
+use     asylum.pbi_pkg.all;
+use     asylum.logic_pkg.all;
+use     asylum.convert_pkg.all;
 
 entity pbi_wrapper_target is
   -- =====[ Parameters ]==========================
